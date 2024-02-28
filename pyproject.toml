@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Efficom School project 2024"
-version = "0.1.0"
+version = "1.0.0"
 readme = "README.md"
 description = "A project showcasing a small and representative app"
 authors = ["Customs Bridge <contact@customsbridge.fr>"]
