@@ -1,86 +1,44 @@
-
-# System libs imports
-from typing import Annotated
-from datetime import timedelta, datetime, timezone
-
-# Libs imports
-from fastapi import FastAPI, HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
-from jose import JWTError, jwt
-
-#local imports
 
 app = FastAPI()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-ACCESS_TOKEN_EXPIRE_MINUTES= 60*24 # 24 hours
-SECRET_KEY = "c60655a4fb84f0883c0ee1d2510eb332769029bc23ecd5796c53010ab01ba6f7"
-ALGORITHM = "HS256"
 
 users = [
     {   
         "id": 1,
         "email": "a@b.c",
         "name": "John",
-        "age": 28,
-        "birthPlace": "New York",
-        "password": "1234"
+        "age": 28
     },
     {
         "id": 2,
         "email": "b@c.d",
         "name": "Jane",
         "age": 32,
-        "password": "12345"
     },
     {
         "id": 3,
         "email": "c@d.e",
         "name": "Doe",
-        "age": 45,
-        "password": "123456"
+        "age": 45
     },
     {
         "id": 4,
         "email": "d@e.f",
-        "name": "Smith",
-        "password": "1234567"
+        "name": "Smith"
     }
 ]
 
 class CreateUser(BaseModel):
     name: str
-    age: int | None = None
+    age: int
     email: str
-    password: str
 
 class User(CreateUser):
     id: int
 
 class RootReturnObj(BaseModel):
     Hello: str
-
-
-@app.post("/login")
-async def login(credentials: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    for user in users:
-        if user["email"] == credentials.username and user["password"] == credentials.password:
-
-
-            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-            jwt_creation_time = datetime.now(timezone.utc)
-            expire = jwt_creation_time + access_token_expires
-            to_encode = {
-                "sub": credentials.username,
-                "exp": expire,
-                "iat": jwt_creation_time
-            }
-            
-            encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-            return {"access_token": encoded_jwt, "token_type": "bearer"}
-    
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
 
 @app.get("/")
 async def helloWorld() -> RootReturnObj:
@@ -91,13 +49,12 @@ async def helloWorld() -> RootReturnObj:
 async def helloJohn():
     return "Hello John!"
 
-# response_model_exclude_unset -> This remove the attributes that are not set in the response (= null or None)
-@app.get("/users", response_model_exclude_unset=True)
-async def getUsers(token: Annotated[str, Depends(oauth2_scheme)], minimum_age: int | None = None) -> list[User]:
+
+@app.get("/users")
+async def getUsers(minimum_age: int | None = None) -> list[User]:
     """
     Endpoint to return all users
     """
-    print(token)
     if minimum_age:
         return [user for user in users if user["age"] >= minimum_age]
     return users

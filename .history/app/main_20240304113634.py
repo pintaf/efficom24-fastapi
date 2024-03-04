@@ -78,7 +78,8 @@ async def login(credentials: Annotated[OAuth2PasswordRequestForm, Depends()]):
             }
             
             encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-            return {"access_token": encoded_jwt, "token_type": "bearer"}
+            return encoded_jwt
+            return {"access_token": user["email"], "token_type": "bearer"}
     
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
 
