@@ -18,6 +18,17 @@ ACCESS_TOKEN_EXPIRE_MINUTES= 60*24 # 24 hours
 SECRET_KEY = "c60655a4fb84f0883c0ee1d2510eb332769029bc23ecd5796c53010ab01ba6f7"
 ALGORITHM = "HS256"
 
+
+
+async def get_decoded_token(token: str = Depends(oauth2_scheme)):
+  try:
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    return(payload.get("sub"))
+  except JWTError as e:
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token", headers={"WWW-Authenticate": "Bearer"}) from e
+
+
+
 users = [
     {   
         "id": 1,
@@ -93,11 +104,10 @@ async def helloJohn():
 
 # response_model_exclude_unset -> This remove the attributes that are not set in the response (= null or None)
 @app.get("/users", response_model_exclude_unset=True)
-async def getUsers(token: Annotated[str, Depends(oauth2_scheme)], minimum_age: int | None = None) -> list[User]:
+async def getUsers(connected_user_email: Annotated[str, Depends(get_decoded_token)], minimum_age: int | None = None) -> list[User]:
     """
     Endpoint to return all users
     """
-    print(token)
     if minimum_age:
         return [user for user in users if user["age"] >= minimum_age]
     return users
